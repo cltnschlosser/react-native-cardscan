@@ -1,3 +1,17 @@
+# Dev
+
+## iOS
+```
+bundle install
+npm install
+cd example
+npm pack ..
+npm install
+cd ios
+bundle exec pod install
+xed .
+```
+
 # Deprecation Notice
 Hello from the Stripe (formerly Bouncer) team!
 

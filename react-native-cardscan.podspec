@@ -12,13 +12,14 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/getbouncer/react-native-cardscan"
   s.license      = "MIT"
   s.authors      = { "Stefano Suryanto" => "stefanocsuryanto@gmail.com" }
-  s.platforms    = { :ios => "9.0", :tvos => "10.0" }
   s.source       = { :git => "https://github.com/getbouncer/react-native-cardscan.git", :tag => "#{s.version}" }
+
+  s.ios.deployment_target = '13.0'
 
   s.source_files = "ios/**/*.{h,m,swift}"
   s.requires_arc = true
 
   s.dependency "React-Core"
-  s.dependency "CardScan", '~> 2.0.9'
+  s.dependency "StripeCardScan", '~> 24.0.0'
 end
 
