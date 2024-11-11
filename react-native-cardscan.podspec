@@ -17,9 +17,9 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '13.0'
 
   s.source_files = "ios/**/*.{h,m,swift}"
+  s.ios.resource_bundle = { 'StripeCardScanBundle' => 'ios/Resources/**/*.{lproj,mlmodelc}' }
   s.requires_arc = true
 
   s.dependency "React-Core"
-  s.dependency "StripeCardScan", '~> 24.0.0'
 end
 
