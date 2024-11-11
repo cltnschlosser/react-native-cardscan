@@ -6,16 +6,13 @@
 //  Copyright © 2021 Facebook. All rights reserved.
 //
 
-import CardScan
+import StripeCardScan
 import Foundation
 import UIKit
 
 @available(iOS 11.2, *)
 @objc(RNCardscan)
 class RNCardScan: NSObject {
-    var resolve: RCTPromiseResolveBlock?
-    var styleDictionary: NSDictionary?
-
     override init() {
         super.init()
     }
@@ -28,28 +25,43 @@ class RNCardScan: NSObject {
         _ resolve: RCTPromiseResolveBlock,
         _ reject: RCTPromiseRejectBlock
     ) -> Void {
-        if true {
-            resolve([SimpleScanViewController.isCompatible()])
-        } else {
-            reject(nil, nil, nil)
-        }
+      resolve(true)
     }
 
     @objc func setiOSScanViewStyle(_ styleDictionary: NSDictionary) {
-        self.styleDictionary = styleDictionary
     }
 
     @objc func scan(
         _ resolve: @escaping RCTPromiseResolveBlock,
-        _ reject: RCTPromiseRejectBlock
+        _ reject: @escaping RCTPromiseRejectBlock
     ) -> Void {
-      self.resolve = resolve
-
       DispatchQueue.main.async {
-        let topViewController = self.getTopViewController()
-        let vc = RNCardScanViewController(viewStyle: self.styleDictionary)
-        vc.delegate = self
-        topViewController?.present(vc, animated: true, completion: nil)
+        let cardScanSheet = CardScanSheet()
+        guard let topViewController = self.getTopViewController() else {
+          reject(nil, nil, nil)
+          return
+        }
+        cardScanSheet.present(from: topViewController) { result in
+          switch result {
+          case .completed(let card):
+            var resolvePayload: [String: Any] = [:]
+            resolvePayload["action"] = "scanned"
+            var payload: [String: Any] = [:]
+            payload["number"] = card.pan
+            payload["cardholderName"] = card.name
+            payload["expiryMonth"] = card.expiryMonth
+            payload["expiryYear"] = card.expiryYear
+            resolvePayload["payload"] = payload
+            resolve(resolvePayload)
+          case .canceled:
+            resolve([
+                "action": "canceled",
+                "canceledReason": "user_canceled"
+            ])
+          case .failed(let error):
+            reject(nil, error.localizedDescription, error)
+          }
+        }
       }
     }
 
@@ -63,43 +75,5 @@ class RNCardScan: NSObject {
       }
 
       return topViewController
-    }
-}
-
-@available(iOS 11.2, *)
-extension RNCardScan: SimpleScanDelegate {
-    // MARK: -SimpleScanDelegate implementation
-    func userDidCancelSimple(_ scanViewController: SimpleScanViewController) {
-        if let topViewController = getTopViewController() {
-            topViewController.dismiss(animated: true, completion: nil)
-        }
-
-        if let resolve = resolve {
-            resolve([
-                "action": "canceled",
-                "canceledReason": "user_canceled"
-            ])
-        }
-    }
-
-    func userDidScanCardSimple(_ scanViewController: SimpleScanViewController, creditCard: CreditCard) {
-        if let topViewController = getTopViewController() {
-            topViewController.dismiss(animated: true, completion: nil)
-        }
-
-        var resolvePayload: [String: Any] = [:]
-        resolvePayload["action"] = "scanned"
-        resolvePayload["payload"] = {
-            var payload: [String: Any] = [:]
-            payload["number"] = creditCard.number
-            payload["cardholderName"] = creditCard.name
-            payload["expiryMonth"] = creditCard.expiryMonth
-            payload["expiryYear"] = creditCard.expiryYear
-            return payload
-        }()
-
-        if let resolve = self.resolve {
-            resolve(resolvePayload)
-        }
     }
 }
